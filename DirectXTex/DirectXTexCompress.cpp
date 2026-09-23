@@ -297,7 +297,18 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
 
         // Refactored version of loop to support parallel independance
-        const size_t nBlocks = std::max<size_t>(1, (image.width + 3) / 4) * std::max<size_t>(1, (image.height + 3) / 4);
+        const size_t nbWidthBlocks = std::max<size_t>(1, (image.width >> 2) + ((image.width & 3) ? 1 : 0));
+        const size_t nbHeightBlocks = std::max<size_t>(1, (image.height >> 2) + ((image.height & 3) ? 1 : 0));
+
+        // The existing loop iterator and coordinate calculations use int. Limit
+        // the block count before narrowing and preserve their representable range.
+        if (image.width > static_cast<size_t>(INT32_MAX) || image.height > static_cast<size_t>(INT32_MAX)
+            || nbWidthBlocks > static_cast<size_t>(INT32_MAX) / nbHeightBlocks)
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
+
+        const size_t nBlocks = nbWidthBlocks * nbHeightBlocks;
 
         bool fail = false;
 
@@ -317,7 +328,7 @@ namespace
                 continue;
             }
 
-            const int nbWidth = std::max<int>(1, int((image.width + 3) / 4));
+            const int nbWidth = static_cast<int>(nbWidthBlocks);
 
             int       y = nb / nbWidth;
             const int x = (nb - (y * nbWidth)) * 4;
