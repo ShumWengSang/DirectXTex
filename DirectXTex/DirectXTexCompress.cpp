@@ -297,7 +297,7 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
 
         // Refactored version of loop to support parallel independance
-        const size_t nbWidthBlocks = std::max<size_t>(1, (image.width >> 2) + ((image.width & 3) ? 1 : 0));
+        const size_t nbWidthBlocks  = std::max<size_t>(1, (image.width >> 2) + ((image.width & 3) ? 1 : 0));
         const size_t nbHeightBlocks = std::max<size_t>(1, (image.height >> 2) + ((image.height & 3) ? 1 : 0));
 
         // The existing loop iterator and coordinate calculations use int. Limit
