@@ -297,18 +297,21 @@ namespace
             return HRESULT_E_NOT_SUPPORTED;
 
         // Refactored version of loop to support parallel independance
-        const size_t nbWidthBlocks  = std::max<size_t>(1, (image.width >> 2) + ((image.width & 3) ? 1 : 0));
-        const size_t nbHeightBlocks = std::max<size_t>(1, (image.height >> 2) + ((image.height & 3) ? 1 : 0));
-
         // The existing loop iterator and coordinate calculations use int. Limit
-        // the block count before narrowing and preserve their representable range.
-        if (image.width > static_cast<size_t>(INT32_MAX) || image.height > static_cast<size_t>(INT32_MAX)
-            || nbWidthBlocks > static_cast<size_t>(INT32_MAX) / nbHeightBlocks)
+        // their input dimensions before calculating the block count.
+        if (image.width > static_cast<size_t>(INT32_MAX) || image.height > static_cast<size_t>(INT32_MAX))
         {
             return HRESULT_E_ARITHMETIC_OVERFLOW;
         }
 
-        const size_t nBlocks = nbWidthBlocks * nbHeightBlocks;
+        // The dimension check keeps the rounded counts and their product within uint64_t.
+        const uint64_t nbWidthBlocks  = std::max<uint64_t>(1, (uint64_t(image.width) + 3) / 4);
+        const uint64_t nbHeightBlocks = std::max<uint64_t>(1, (uint64_t(image.height) + 3) / 4);
+        const uint64_t nBlocks        = nbWidthBlocks * nbHeightBlocks;
+        if (nBlocks > INT32_MAX)
+        {
+            return HRESULT_E_ARITHMETIC_OVERFLOW;
+        }
 
         bool fail = false;
 
